@@ -1,7 +1,25 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"io/ioutil"
+	"log"
+	"strings"
+)
 
 func main() {
-	fmt.Println("hello, world")
+	file, err := ioutil.ReadFile("ExampleIn.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	inputString := string(file)
+
+	inputArray := strings.Split(inputString, " ")
+
+	for i := 0; i < len(inputArray); i++ {
+		fmt.Println(inputArray[i], " ")
+	}
+
+
 }
