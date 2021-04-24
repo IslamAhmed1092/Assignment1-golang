@@ -2,10 +2,7 @@ package main
 
 import (
 	"bufio"
-	// "fmt"
 	"strconv"
-
-	// "io/ioutil"
 	"log"
 	"os"
 	"sort"
@@ -13,32 +10,35 @@ import (
 	"sync"
 )
 
-var resultMap map[string]int
-var mu sync.Mutex
-var wg sync.WaitGroup
+type WordsCount struct {
+	resultMap map[string]int
+	mu sync.Mutex
+	wg sync.WaitGroup
 
-func computerWordCounts(textArray []string) {
-	defer wg.Done()
+}
+
+func (wc* WordsCount) computerWordCounts(textArray []string) {
 
 	routineResult := make(map[string]int)
 	for _, v := range textArray {
 		routineResult[v] += 1
 	}
 
-	reducer(routineResult)
+	wc.reducer(routineResult)
+	wc.wg.Done()
 }
 
-func reducer(routineResult map[string]int) {
-	mu.Lock()
+func (wc* WordsCount) reducer(routineResult map[string]int) {
+	wc.mu.Lock()
 
 	for key, value := range routineResult {
-		resultMap[key] += value
+		wc.resultMap[key] += value
 	}
 
-	mu.Unlock()
+	wc.mu.Unlock()
 }
 
-func sortAndWrite() {
+func sortAndWrite(resultMap map[string]int) {
 
 	type pair struct {
 		Key   string
@@ -72,7 +72,7 @@ func sortAndWrite() {
 
 func main() {
 
-	resultMap = make(map[string]int)
+	wc := WordsCount{resultMap: make(map[string]int)}
 
 	file, err := os.Open("ExampleIn.txt")
 
@@ -90,7 +90,7 @@ func main() {
 		inputString += scanner.Text() + " "
 	}
 
-	inputString = strings.ToLower(string(inputString[:len(inputString)-1]))
+	inputString = strings.ToLower(inputString[:len(inputString)-1])
 
 	inputArray := strings.Split(inputString, " ")
 
@@ -102,11 +102,11 @@ func main() {
 		if i == 4 {
 			endIndex = numberOfWords
 		}
-		wg.Add(1)
-		go computerWordCounts(inputArray[startIndex:endIndex])
+		wc.wg.Add(1)
+		go wc.computerWordCounts(inputArray[startIndex:endIndex])
 	}
 
-	wg.Wait()
+	wc.wg.Wait()
 
-	sortAndWrite()
+	sortAndWrite(wc.resultMap)
 }
